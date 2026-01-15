@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI Text Spotter - Detect AI-generated text in cover letters">
+    <title>AI Text Spotter - AI-Generated Text Detection</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <h1 class="title">🔍 AI Text Spotter</h1>
+            <p class="subtitle">Detect AI-generated text in cover letters using advanced ensemble detection</p>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container main-content">
+        <!-- Instructions -->
+        <section class="instructions" role="region" aria-label="Instructions">
+            <h2>How It Works</h2>
+            <p>Upload a cover letter or paste text to analyze it for AI-generated content. Our system uses three independent detectors:</p>
+            <ul>
+                <li><strong>Statistical Detector:</strong> Pure mathematical analysis of text features</li>
+                <li><strong>AI Detector:</strong> DistilBERT-based machine learning model</li>
+                <li><strong>Jury Model:</strong> Groq Llama 3.1 8B for final arbitration</li>
+            </ul>
+        </section>
+
+        <!-- Input Section -->
+        <section class="input-section" role="region" aria-label="Input">
+            <h2>Input Text</h2>
+            
+            <!-- File Upload -->
+            <div class="upload-area" id="uploadArea" role="button" tabindex="0" aria-label="File upload area">
+                <div class="upload-icon">📄</div>
+                <p class="upload-text">Drag and drop a file here, or click to select</p>
+                <p class="upload-hint">Supports PDF, DOCX, TXT (max 5MB)</p>
+                <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" hidden aria-label="File input">
+            </div>
+            
+            <div class="divider">
+                <span>OR</span>
+            </div>
+            
+            <!-- Text Area -->
+            <div class="text-input-container">
+                <label for="textInput" class="input-label">Paste your text here:</label>
+                <textarea 
+                    id="textInput" 
+                    class="text-input" 
+                    placeholder="Paste your cover letter text here..."
+                    rows="8"
+                    maxlength="10000"
+                    aria-label="Text input area"
+                ></textarea>
+                <div class="char-count" id="charCount">0 / 10,000 characters</div>
+            </div>
+            
+            <!-- Analyze Button -->
+            <button id="analyzeBtn" class="btn btn-primary" aria-label="Analyze text">
+                <span class="btn-text">Analyze Text</span>
+            </button>
+        </section>
+
+        <!-- Loading State -->
+        <section class="loading-section hidden" id="loadingSection" role="region" aria-label="Loading">
+            <div class="loader"></div>
+            <p class="loading-text">Analyzing text... This may take a few moments.</p>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section hidden" id="resultsSection" role="region" aria-label="Results">
+            <h2>Analysis Results</h2>
+            
+            <!-- Statistics -->
+            <div class="stats-container" id="statsContainer">
+                <!-- Stats will be inserted here -->
+            </div>
+            
+            <!-- Legend -->
+            <div class="legend">
+                <h3>Color Legend</h3>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <span class="legend-color human"></span>
+                        <span class="legend-label">Human-written</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color suspicious"></span>
+                        <span class="legend-label">Suspicious</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color ai"></span>
+                        <span class="legend-label">AI-generated</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analyzed Text -->
+            <div class="analyzed-text-container">
+                <h3>Analyzed Text</h3>
+                <p class="hint">Click on any sentence to see detailed analysis</p>
+                <div id="analyzedText" class="analyzed-text">
+                    <!-- Sentences will be inserted here -->
+                </div>
+            </div>
+            
+            <!-- Export Buttons -->
+            <div class="export-buttons">
+                <button id="exportDocxBtn" class="btn btn-secondary" aria-label="Export as DOCX">
+                    <span class="btn-text">📄 Download as DOCX</span>
+                </button>
+                <button id="exportPdfBtn" class="btn btn-secondary" aria-label="Export as PDF">
+                    <span class="btn-text">📑 Download as PDF</span>
+                </button>
+            </div>
+        </section>
+
+        <!-- Error Section -->
+        <section class="error-section hidden" id="errorSection" role="region" aria-label="Error">
+            <div class="error-message" id="errorMessage">
+                <!-- Error message will be inserted here -->
+            </div>
+            <button id="errorCloseBtn" class="btn btn-secondary" aria-label="Close error">Close</button>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 AI Text Spotter. Open source project.</p>
+            <p>Uses ensemble detection: Statistical Analysis + DistilBERT + Groq Llama 3.1</p>
+        </div>
+    </footer>
+
+    <!-- Modal for Sentence Details -->
+    <div id="sentenceModal" class="modal hidden" role="dialog" aria-labelledby="modalTitle" aria-modal="true">
+        <div class="modal-content">
+            <button class="modal-close" id="modalClose" aria-label="Close modal">&times;</button>
+            <h3 id="modalTitle">Sentence Analysis</h3>
+            <div id="modalBody">
+                <!-- Modal content will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/api.js"></script>
+    <script src="js/fileHandler.js"></script>
+    <script src="js/textDisplay.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: ai-text-spotter-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=${GROQ_MODEL:-llama-3.1-8b-instant}
+      - LLM_DETECTOR_MODEL=${LLM_DETECTOR_MODEL:-Hello-SimpleAI/chatgpt-detector-roberta}
+      - MODEL_CACHE_DIR=/app/models
+      - MAX_TEXT_LENGTH=${MAX_TEXT_LENGTH:-10000}
+      - MAX_FILE_SIZE_MB=${MAX_FILE_SIZE_MB:-5}
+      - BATCH_SIZE=${BATCH_SIZE:-10}
+      - ENABLE_CACHING=${ENABLE_CACHING:-true}
+      - HOST=0.0.0.0
+      - PORT=8000
+      - WORKERS=1
+      - CORS_ORIGINS=*
+    volumes:
+      - ./models:/app/models
+    mem_limit: 900m
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  frontend:
+    image: nginx:alpine
+    container_name: ai-text-spotter-frontend
+    ports:
+      - "80:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
