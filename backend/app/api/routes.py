@@ -3,7 +3,7 @@ API routes for the AI Text Spotter application.
 Implements FastAPI endpoints for text analysis, export, and health checks.
 """
 import logging
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, HTTPException, Response
 from app.models.schemas import (
     AnalyzeRequest,
@@ -15,11 +15,6 @@ from app.models.schemas import (
     DetectorScores,
     MathematicalFeatures
 )
-from app.detectors.mathematical import MathematicalDetector
-from app.detectors.llm_detector import LLMDetector
-from app.detectors.jury import JuryDetector
-from app.services.text_processor import TextProcessor
-from app.services.file_handler import FileHandler
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -27,12 +22,39 @@ logger = logging.getLogger(__name__)
 # Initialize router
 router = APIRouter()
 
-# Initialize detectors and services (lazy loading for LLM)
-math_detector = MathematicalDetector()
-llm_detector = LLMDetector()
-jury_detector = JuryDetector()
-text_processor = TextProcessor()
-file_handler = FileHandler()
+# Global detector and service instances (lazy initialization)
+_math_detector = None
+_llm_detector = None
+_jury_detector = None
+_text_processor = None
+_file_handler = None
+
+
+def get_detectors_and_services():
+    """Lazy initialization of detectors and services."""
+    global _math_detector, _llm_detector, _jury_detector, _text_processor, _file_handler
+    
+    if _math_detector is None:
+        from app.detectors.mathematical import MathematicalDetector
+        _math_detector = MathematicalDetector()
+    
+    if _llm_detector is None:
+        from app.detectors.llm_detector import LLMDetector
+        _llm_detector = LLMDetector()
+    
+    if _jury_detector is None:
+        from app.detectors.jury import JuryDetector
+        _jury_detector = JuryDetector()
+    
+    if _text_processor is None:
+        from app.services.text_processor import TextProcessor
+        _text_processor = TextProcessor()
+    
+    if _file_handler is None:
+        from app.services.file_handler import FileHandler
+        _file_handler = FileHandler()
+    
+    return _math_detector, _llm_detector, _jury_detector, _text_processor, _file_handler
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -44,6 +66,9 @@ async def analyze_text(request: AnalyzeRequest):
     Returns sentence-by-sentence analysis with classifications.
     """
     try:
+        # Get detectors and services
+        math_detector, llm_detector, jury_detector, text_processor, file_handler = get_detectors_and_services()
+        
         # Extract text from request
         if request.text:
             text = request.text
@@ -143,6 +168,9 @@ async def export_analysis(request: ExportRequest):
     Returns binary file download.
     """
     try:
+        # Get file handler
+        _, _, _, _, file_handler = get_detectors_and_services()
+        
         # Convert sentences to dict format
         sentences_data = [s.dict() for s in request.sentences]
         
@@ -196,14 +224,18 @@ async def health_check():
     Returns status of all detectors and models.
     """
     try:
-        # Check mathematical detector (always available)
-        math_loaded = True
+        # Get detectors (don't initialize heavy models, just check availability)
+        math_loaded = True  # Mathematical detector is always available
         
-        # Check LLM detector
-        llm_loaded = llm_detector.is_loaded()
+        llm_loaded = False
+        jury_available = False
         
-        # Check jury API
-        jury_available = jury_detector.is_available()
+        # Check if detectors have been initialized
+        if _llm_detector is not None:
+            llm_loaded = _llm_detector.is_loaded()
+        
+        if _jury_detector is not None:
+            jury_available = _jury_detector.is_available()
         
         return HealthResponse(
             status="healthy",
