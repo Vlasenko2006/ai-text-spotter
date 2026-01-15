@@ -2,11 +2,17 @@
 
 **AI-generated text detection system for cover letters using ensemble detection**
 
+[![Security](https://img.shields.io/badge/security-updated-brightgreen)](SECURITY.md)
+[![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 AI Text Spotter is a web application that detects AI-generated text in cover letters using an ensemble of three independent detectors:
 
 1. **Pure Mathematical/Statistical Detector** - No neural networks, only statistical analysis
 2. **AI Detector (DistilBERT)** - Small transformer model for AI text classification  
 3. **Jury Model (Groq Llama 3.1 8B)** - Final arbitrator via API
+
+> **Security Note**: All dependencies updated to latest secure versions (January 2025). See [SECURITY.md](SECURITY.md) for details.
 
 ## 🏗️ Architecture
 
