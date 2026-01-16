@@ -4,8 +4,9 @@ Loads settings from environment variables with sensible defaults.
 """
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, List
 from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -31,7 +32,18 @@ class Settings(BaseSettings):
     workers: int = 1
     
     # CORS Settings
-    cors_origins: list = ["*"]
+    cors_origins: Union[str, List[str]] = "*"
+    
+    @field_validator('cors_origins', mode='before')
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS origins from string or list."""
+        if isinstance(v, str):
+            if v == "*":
+                return ["*"]
+            # If it's a comma-separated string, split it
+            return [origin.strip() for origin in v.split(',')]
+        return v
     
     class Config:
         env_file = ".env"

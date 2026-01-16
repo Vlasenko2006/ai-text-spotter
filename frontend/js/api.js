@@ -4,9 +4,8 @@
  */
 
 const API = {
-    baseURL: window.location.hostname === 'localhost' 
-        ? 'http://localhost:8000/api' 
-        : '/api',
+    // Always use relative URL to go through nginx proxy
+    baseURL: '/api',
     
     /**
      * Analyze text for AI-generated content
