@@ -6,7 +6,10 @@
 Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is a kind of literature fingerprint, allowing to spot the authorship. Based on this fact we develped a method that defines AI written texts with accuracy greater than 75%. Although the modern AI spotifiers show higher accuracy, our method stays out due to its simplicity and mathematical explainability. It can be used as a separate tool for identifying AI texts or serve as a suplementary to existing ones to sharpen their accuracy.  
 
 
-Comparing AI and human written texts approximately of the same length and topic we noticed that: humans use concrete imagery with concise descriptions in their explanations, while AI-generated content tends to be more abstract and verbose. Presenting texts in the embedded symantical space, where each symantic expression corresponds to a vector in this space we found 25% larger spread of these vectors corresponding to AI texts rather than human texts. This clear marker is the keystone of our detection technique, 
+Comparing AI and human written texts approximately of the same length and topic we noticed that: humans use concrete imagery with concise descriptions in their explanations, while AI-generated content tends to be more abstract and verbose. Presenting texts in the embedded symantical space, where each symantic expression corresponds to a vector in this space we found 25% larger spread of these vectors corresponding to AI texts rather than human texts. This clear marker is the keystone of our detection technique.
+
+We test our method on 600 wikipedia articles and AI generated texts on the same topics. We used LLama 3.1/3.3 and GPT-5 mini LLMs for AI text generation. In additio we found that AI texts have the same spread irrespective of the language model used, which also indicates on the common way of generationg textsExpected Outcomes
+Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is similar to fingerprint, allowing t.  
 
 
 
