@@ -2,7 +2,13 @@
 
 ## Introduction
 
-When comparing AI-generated and human-written texts, a notable pattern emerges: humans tend to use concrete imagery with concise descriptions in their explanations, while AI-generated content tends to be more abstract and verbose.
+
+Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is a kind of literature fingerprint, allowing to spot the authorship. Based on this fact we develped a method that defines AI written texts with accuracy greater than 75%. Although the modern AI spotifiers show higher accuracy, our method stays out due to its simplicity and mathematical explainability. It can be used as a separate tool for identifying AI texts or serve as a suplementary to existing ones to sharpen their accuracy.  
+
+
+Comparing AI and human written texts approximately of the same length and topic we noticed that: humans use concrete imagery with concise descriptions in their explanations, while AI-generated content tends to be more abstract and verbose. Presenting texts in the embedded symantical space, where each symantic expression corresponds to a vector in this space we found 25% larger spread of these vectors corresponding to AI texts rather than human texts. This clear marker is the keystone of our detection technique, 
+
+
 
 This observation raises an important question: **Can we determine whether an article was written by a human or AI based solely on writing style?**
 
@@ -63,7 +69,6 @@ The semantic vectors in AI-generated explanations should show **greater variance
 
 ## Expected Outcomes
 
-Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is similar to fingerprint, allowing to spot the authorship. Based on this fact we develped a method that defines AI written texts with accuracy greater than 75%. Although the modern AI spotifiers show higher accuracy, our method stays out due to its simplicity and mathematical explainability. It can be used as a separate tool for identifying AI texts or serve as a suplementary to existing ones to sharpen their accuracy.  
 
 
 By analyzing the variance and distribution patterns of semantic vectors, we aim to develop a method for distinguishing AI-generated content from human-written text based on statistical analysis of stylistic and semantic characteristics rather than content alone.
