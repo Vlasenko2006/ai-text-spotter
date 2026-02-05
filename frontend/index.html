@@ -20,13 +20,8 @@
     <main class="container main-content">
         <!-- Instructions -->
         <section class="instructions" role="region" aria-label="Instructions">
-            <h2>How It Works</h2>
-            <p>Upload a cover letter or paste text to analyze it for AI-generated content. Our system uses three independent detectors:</p>
-            <ul>
-                <li><strong>Statistical Detector:</strong> Pure mathematical analysis of text features</li>
-                <li><strong>AI Detector:</strong> DistilBERT-based machine learning model</li>
-                <li><strong>Jury Model:</strong> Groq Llama 3.1 8B for final arbitration</li>
-            </ul>
+            <h2 class="main-instruction">Upload or paste text to spotlight AI-generated content</h2>
+            <p class="instruction-details">Our system spotlights AI texts larger than 4000 letters with overall average accuracy of 85%. Texts larger than 10000 letters will be truncated.</p>
         </section>
 
         <!-- Input Section -->
@@ -53,10 +48,9 @@
                     class="text-input" 
                     placeholder="Paste your cover letter text here..."
                     rows="8"
-                    maxlength="10000"
                     aria-label="Text input area"
                 ></textarea>
-                <div class="char-count" id="charCount">0 / 10,000 characters</div>
+                <div class="char-count" id="charCount">0 characters</div>
             </div>
             
             <!-- Analyze Button -->
@@ -85,16 +79,24 @@
                 <h3>Color Legend</h3>
                 <div class="legend-items">
                     <div class="legend-item">
-                        <span class="legend-color human"></span>
-                        <span class="legend-label">Human-written</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-color suspicious"></span>
-                        <span class="legend-label">Suspicious</span>
-                    </div>
-                    <div class="legend-item">
                         <span class="legend-color ai"></span>
-                        <span class="legend-label">AI-generated</span>
+                        <span class="legend-label">AI (probability > 87%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color likely-ai"></span>
+                        <span class="legend-label">Likely AI (probability 75%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color mixed"></span>
+                        <span class="legend-label">Mixed</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color likely-human"></span>
+                        <span class="legend-label">Likely Human (probability 68%)</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-color human"></span>
+                        <span class="legend-label">Human (probability 95%)</span>
                     </div>
                 </div>
             </div>
@@ -131,8 +133,7 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
-            <p>&copy; 2024 AI Text Spotter. Open source project.</p>
-            <p>Uses ensemble detection: Statistical Analysis + DistilBERT + Groq Llama 3.1</p>
+            <p>&copy; 2026 AI Text Spotter. Open source project.</p>
         </div>
     </footer>
 

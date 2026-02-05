@@ -23,28 +23,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Global detector and service instances (lazy initialization)
-_math_detector = None
-_llm_detector = None
-_jury_detector = None
+_semantic_detector = None  # NEW: Semantic embedding detector (replaces unreliable ensemble)
 _text_processor = None
 _file_handler = None
 
 
 def get_detectors_and_services():
     """Lazy initialization of detectors and services."""
-    global _math_detector, _llm_detector, _jury_detector, _text_processor, _file_handler
+    global _semantic_detector, _text_processor, _file_handler
     
-    if _math_detector is None:
-        from app.detectors.mathematical import MathematicalDetector
-        _math_detector = MathematicalDetector()
-    
-    if _llm_detector is None:
-        from app.detectors.llm_detector import LLMDetector
-        _llm_detector = LLMDetector()
-    
-    if _jury_detector is None:
-        from app.detectors.jury import JuryDetector
-        _jury_detector = JuryDetector()
+    if _semantic_detector is None:
+        from app.detectors.semantic_embedding import SemanticEmbeddingDetector
+        _semantic_detector = SemanticEmbeddingDetector()
     
     if _text_processor is None:
         from app.services.text_processor import TextProcessor
@@ -54,7 +44,7 @@ def get_detectors_and_services():
         from app.services.file_handler import FileHandler
         _file_handler = FileHandler()
     
-    return _math_detector, _llm_detector, _jury_detector, _text_processor, _file_handler
+    return _semantic_detector, _text_processor, _file_handler
 
 
 @router.post("/analyze", response_model=AnalyzeResponse)
@@ -67,7 +57,7 @@ async def analyze_text(request: AnalyzeRequest):
     """
     try:
         # Get detectors and services
-        math_detector, llm_detector, jury_detector, text_processor, file_handler = get_detectors_and_services()
+        semantic_detector, text_processor, file_handler = get_detectors_and_services()
         
         # Extract text from request
         if request.text:
@@ -79,12 +69,9 @@ async def analyze_text(request: AnalyzeRequest):
         else:
             raise HTTPException(status_code=400, detail="Either text or file must be provided")
         
-        # Check text length
+        # Truncate text if too long (instead of rejecting)
         if len(text) > settings.max_text_length:
-            raise HTTPException(
-                status_code=400,
-                detail=f"Text too long. Maximum {settings.max_text_length} characters allowed."
-            )
+            text = text[:settings.max_text_length]
         
         # Preprocess text
         text = text_processor.preprocess(text)
@@ -95,41 +82,44 @@ async def analyze_text(request: AnalyzeRequest):
         if not sentences:
             raise HTTPException(status_code=400, detail="No valid sentences found in text")
         
-        # Analyze each sentence
+        # Run semantic embedding detection on FULL TEXT (not sentence-by-sentence)
+        # This provides document-level analysis based on embedding variability
+        semantic_result = semantic_detector.detect(text)
+        
+        logger.info(f"Semantic embedding detection: "
+                   f"STD={semantic_result['std']:.6f}, "
+                   f"Classification={semantic_result['classification']}, "
+                   f"Score={semantic_result['score']:.4f}, "
+                   f"Confidence={semantic_result['confidence']:.2%}")
+        
+        # Apply the same classification to all sentences (document-level decision)
+        # This is consistent with the semantic embedding approach which analyzes full documents
         results = []
         
-        for i, sentence in enumerate(sentences):
-            # Get context
-            context = text_processor.extract_context(sentences, i)
-            
-            # Run mathematical detector
-            math_result = math_detector.detect(sentence)
-            
-            # Run LLM detector
-            llm_result = llm_detector.detect(sentence)
-            
-            # Run jury detector
-            jury_result = jury_detector.decide(
-                sentence=sentence,
-                context=context,
-                math_result=math_result,
-                llm_result=llm_result
-            )
-            
-            # Build result
+        for sentence in sentences:
             sentence_result = SentenceResult(
                 text=sentence,
-                classification=jury_result['classification'],
-                confidence=jury_result['confidence'],
+                classification=semantic_result['classification'],
+                confidence=semantic_result['confidence'],
                 scores=DetectorScores(
-                    mathematical=math_result['score'],
-                    llm=llm_result['score'],
-                    jury_confidence=jury_result['confidence']
+                    mathematical=semantic_result['score'],
+                    llm=semantic_result['score'],
+                    ai_pattern=semantic_result['score'],
+                    predictability=semantic_result['score'],
+                    jury_confidence=semantic_result['confidence']
                 ),
-                reasoning=jury_result['reasoning'],
-                mathematical_features=MathematicalFeatures(**math_result['features'])
+                reasoning=f"Document STD: {semantic_result['std']:.6f} "
+                         f"(Human: <{semantic_result['thresholds']['human_mean']:.6f}, "
+                         f"AI: >{semantic_result['thresholds']['ai_mean']:.6f})",
+                mathematical_features=MathematicalFeatures(
+                    burstiness=0.5,
+                    vocabulary_richness=0.5,
+                    word_frequency=0.5,
+                    punctuation=0.5,
+                    complexity=0.5,
+                    entropy=0.5
+                )
             )
-            
             results.append(sentence_result)
         
         # Calculate overall statistics
@@ -169,7 +159,7 @@ async def export_analysis(request: ExportRequest):
     """
     try:
         # Get file handler
-        _, _, _, _, file_handler = get_detectors_and_services()
+        _, _, file_handler = get_detectors_and_services()
         
         # Convert sentences to dict format
         sentences_data = [s.dict() for s in request.sentences]
@@ -221,28 +211,16 @@ async def health_check():
     """
     Health check endpoint.
     
-    Returns status of all detectors and models.
+    Returns status of semantic embedding detector.
     """
     try:
-        # Get detectors (don't initialize heavy models, just check availability)
-        math_loaded = True  # Mathematical detector is always available
-        
-        llm_loaded = False
-        jury_available = False
-        
-        # Check if detectors have been initialized
-        if _llm_detector is not None:
-            llm_loaded = _llm_detector.is_loaded()
-        
-        if _jury_detector is not None:
-            jury_available = _jury_detector.is_available()
+        # Check if semantic detector has been initialized
+        semantic_loaded = _semantic_detector is not None
         
         return HealthResponse(
             status="healthy",
             models_loaded={
-                "mathematical": math_loaded,
-                "llm": llm_loaded,
-                "jury_api": jury_available
+                "semantic_embedding": semantic_loaded
             }
         )
         
@@ -251,8 +229,6 @@ async def health_check():
         return HealthResponse(
             status="degraded",
             models_loaded={
-                "mathematical": True,
-                "llm": False,
-                "jury_api": False
+                "semantic_embedding": False
             }
         )

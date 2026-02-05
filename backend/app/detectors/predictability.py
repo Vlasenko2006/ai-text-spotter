@@ -1,0 +1,209 @@
+"""
+Predictability Detector - Tests if text follows predictable AI patterns
+Uses random phrase masking and LLM reconstruction to detect AI-generated content
+
+Key insight: AI text is predictable (LLM can guess masked phrases)
+             Human text is unique (LLM cannot predict specific phrasing)
+"""
+
+import re
+import random
+import logging
+from typing import List, Tuple, Dict
+from difflib import SequenceMatcher
+import os
+from groq import Groq
+
+logger = logging.getLogger(__name__)
+
+
+class PredictabilityDetector:
+    """
+    Masks random phrases in text and asks LLM to predict them.
+    High prediction accuracy = AI text (predictable patterns)
+    Low prediction accuracy = Human text (unique phrasing)
+    """
+    
+    def __init__(self):
+        api_key = os.getenv('GROQ_API_KEY')
+        if not api_key:
+            logger.warning("GROQ_API_KEY not set - Predictability detector will use fallback")
+            self.client = None
+        else:
+            self.client = Groq(api_key=api_key)
+            logger.info("Groq client initialized for Predictability detector")
+        
+        self.model = "llama-3.3-70b-versatile"
+    
+    def _split_sentences(self, text: str) -> List[str]:
+        """Split text into sentences"""
+        sentences = [s.strip() for s in re.split(r'[.!?]+', text) if s.strip()]
+        return sentences
+    
+    def _mask_phrase(self, sentence: str) -> Tuple[str, str, int, int]:
+        """
+        Mask a random phrase (4-8 words) in the sentence
+        Returns: (masked_sentence, original_phrase, start_pos, end_pos)
+        """
+        words = sentence.split()
+        if len(words) < 4:
+            return sentence, "", 0, 0
+        
+        # Random phrase length between 4-8 words (or sentence length if shorter)
+        phrase_len = random.randint(4, min(8, len(words)))
+        
+        # Random starting position
+        max_start = len(words) - phrase_len
+        start_pos = random.randint(0, max(0, max_start))
+        end_pos = start_pos + phrase_len
+        
+        # Extract original phrase
+        original_phrase = ' '.join(words[start_pos:end_pos])
+        
+        # Create masked sentence
+        masked_words = words[:start_pos] + ['XXX'] + words[end_pos:]
+        masked_sentence = ' '.join(masked_words)
+        
+        return masked_sentence, original_phrase, start_pos, end_pos
+    
+    def _calculate_similarity(self, str1: str, str2: str) -> float:
+        """
+        Calculate similarity between two strings (0.0 = different, 1.0 = identical)
+        Uses sequence matching for semantic similarity
+        """
+        if not str1 or not str2:
+            return 0.0
+        
+        # Normalize: lowercase, remove extra spaces
+        s1 = ' '.join(str1.lower().split())
+        s2 = ' '.join(str2.lower().split())
+        
+        # Use SequenceMatcher for fuzzy matching
+        similarity = SequenceMatcher(None, s1, s2).ratio()
+        return round(similarity, 4)
+    
+    def _predict_masked_phrase(self, masked_sentence: str, context: str = "") -> str:
+        """
+        Ask LLM to predict what should fill the XXX
+        """
+        if not self.client:
+            # Fallback: return generic prediction
+            return "relevant information appropriate context"
+        
+        try:
+            prompt = f"""You are filling in a missing part of a cover letter sentence.
+The missing part is marked with XXX. Predict ONLY the missing words (4-8 words).
+Do not include any explanation, quotes, or additional text.
+
+{f'Context: {context}' if context else ''}
+
+Sentence with missing part:
+{masked_sentence}
+
+Predicted missing words:"""
+            
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                temperature=0.3,  # Low temperature for consistent predictions
+                max_tokens=50
+            )
+            
+            predicted = response.choices[0].message.content.strip()
+            # Remove quotes if LLM added them
+            predicted = predicted.strip('"\'')
+            
+            logger.debug(f"Predicted: '{predicted}' for masked: '{masked_sentence}'")
+            return predicted
+        
+        except Exception as e:
+            logger.error(f"LLM prediction failed: {e}")
+            return ""
+    
+    def detect(self, text: str) -> Dict[str, float]:
+        """
+        Main detection method
+        
+        Returns:
+            {
+                'score': float,  # 0.0-1.0, higher = more human
+                'predictability': float,  # Average similarity (0-1, higher = more predictable/AI)
+                'samples': int  # Number of samples tested
+            }
+        """
+        sentences = self._split_sentences(text)
+        
+        if len(sentences) < 2:
+            return {
+                'score': 0.5,  # Neutral for very short text
+                'predictability': 0.5,
+                'samples': 0
+            }
+        
+        # Process in 4 batches of 25% each
+        batch_size = max(1, len(sentences) // 4)
+        similarities = []
+        
+        for batch_idx in range(4):
+            start_idx = batch_idx * batch_size
+            end_idx = min(start_idx + batch_size, len(sentences))
+            batch_sentences = sentences[start_idx:end_idx]
+            
+            if not batch_sentences:
+                continue
+            
+            # Select random sentence from batch
+            sentence = random.choice(batch_sentences)
+            
+            # Mask random phrase
+            masked_sent, original_phrase, _, _ = self._mask_phrase(sentence)
+            
+            if not original_phrase:
+                continue  # Sentence too short
+            
+            # Get LLM prediction
+            # Context: surrounding sentences for better prediction
+            context_start = max(0, sentences.index(sentence) - 1)
+            context_end = min(len(sentences), sentences.index(sentence) + 2)
+            context = ' '.join(sentences[context_start:context_end])
+            
+            predicted_phrase = self._predict_masked_phrase(masked_sent, context)
+            
+            # Calculate similarity
+            similarity = self._calculate_similarity(original_phrase, predicted_phrase)
+            similarities.append(similarity)
+            
+            logger.info(f"Batch {batch_idx+1}/4: Original='{original_phrase}', "
+                       f"Predicted='{predicted_phrase}', Similarity={similarity:.3f}")
+        
+        if not similarities:
+            return {
+                'score': 0.5,
+                'predictability': 0.5,
+                'samples': 0
+            }
+        
+        # Average predictability across all batches
+        avg_predictability = sum(similarities) / len(similarities)
+        
+        # Convert to human score (lower predictability = more human)
+        # High predictability (0.8+) = AI text → low human score (0.2)
+        # Low predictability (0.3-) = Human text → high human score (0.7+)
+        human_score = 1.0 - avg_predictability
+        
+        logger.info(f"Predictability analysis: {len(similarities)} samples, "
+                   f"Avg similarity={avg_predictability:.3f}, Human score={human_score:.3f}")
+        
+        return {
+            'score': round(human_score, 4),
+            'predictability': round(avg_predictability, 4),
+            'samples': len(similarities)
+        }
+
+
+# Convenience function for single calls
+def detect_predictability(text: str) -> float:
+    """Quick predictability check - returns human score (0.0-1.0)"""
+    detector = PredictabilityDetector()
+    result = detector.detect(text)
+    return result['score']

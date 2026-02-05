@@ -122,11 +122,27 @@ const FileHandler = {
     reset() {
         window.currentFile = null;
         const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        
+        // Clear file input value before removing it
+        if (fileInput) {
+            fileInput.value = '';
+        }
+        
         uploadArea.innerHTML = `
             <div class="upload-icon">📄</div>
             <p class="upload-text">Drag and drop a file here, or click to select</p>
             <p class="upload-hint">Supports PDF, DOCX, TXT (max 5MB)</p>
+            <input type="file" id="fileInput" accept=".pdf,.docx,.doc,.txt" hidden aria-label="File input">
         `;
-        document.getElementById('fileInput').value = '';
+        
+        // Re-initialize file input event listener
+        const newFileInput = document.getElementById('fileInput');
+        newFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                this.handleFile(file);
+            }
+        });
     }
 };

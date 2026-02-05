@@ -80,20 +80,27 @@ class MathematicalDetector:
         
         # Aggregate score (weighted average)
         # Human writing tends to have:
-        # - Higher burstiness (more variation)
+        # - Higher burstiness (more variation) - but formal writing may be consistent
         # - Higher vocabulary richness (more unique words)
         # - Mix of common and uncommon words
         # - Natural punctuation patterns
-        # - Varied complexity
+        # - Varied complexity - but formal writing may be structured
         # - Higher entropy
-        score = (
-            burstiness * 0.20 +
-            vocab_richness * 0.20 +
-            word_freq * 0.15 +
-            punctuation * 0.15 +
-            complexity * 0.15 +
-            entropy * 0.15
+        # 
+        # NOTE: Professional/formal writing scores lower on burstiness and complexity
+        # but is still human - adjust weights accordingly
+        raw_score = (
+            burstiness * 0.10 +          # Reduced - formal writing is consistent
+            vocab_richness * 0.25 +      # Increased - unique words matter more
+            word_freq * 0.20 +           # Increased - word choice is important
+            punctuation * 0.20 +         # Increased - punctuation patterns matter
+            complexity * 0.10 +          # Reduced - formal writing is structured
+            entropy * 0.15               # Keep same
         )
+        
+        # Gentle NEGATIVE bias (-0.03) to increase AI sensitivity while preserving human accuracy
+        # -0.10 was too aggressive, -0.03 is more balanced
+        score = max(raw_score - 0.03, 0.0)
         
         return {
             'score': round(score, 4),

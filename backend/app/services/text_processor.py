@@ -81,6 +81,7 @@ class TextProcessor:
     def preprocess(self, text: str) -> str:
         """
         Basic preprocessing of text.
+        Matches the preprocessing used during training (download_wikipedia_articles.py).
         
         Args:
             text: Input text
@@ -88,7 +89,17 @@ class TextProcessor:
         Returns:
             Preprocessed text
         """
-        # Remove excessive whitespace
+        # Remove references like [1], [2], etc.
+        text = re.sub(r'\[\d+\]', '', text)
+        
+        # Remove multiple spaces
+        text = re.sub(r'\s+', ' ', text)
+        
+        # Remove special characters but keep basic punctuation
+        # Keeps: letters, digits, spaces, . , ! ? ; : - ' " ( )
+        text = re.sub(r'[^\w\s\.\,\!\?\;\:\-\'\"\(\)]', ' ', text)
+        
+        # Remove multiple spaces again
         text = re.sub(r'\s+', ' ', text)
         
         # Remove leading/trailing whitespace

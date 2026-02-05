@@ -106,14 +106,24 @@ class LLMDetector:
             ai_prob = probs[0][0].item()
             human_prob = probs[0][1].item()
             
-            # Score: human probability (0=AI, 1=Human)
-            score = human_prob
+            # Raw score: human probability (0=AI, 1=Human)
+            raw_score = human_prob
             
-            # Confidence: max probability
-            confidence = max(ai_prob, human_prob)
+            # Log raw scores for debugging
+            logger.info(f"LLM raw scores - AI: {ai_prob:.4f}, Human: {human_prob:.4f}, Raw score: {raw_score:.4f}")
+            logger.info(f"Sentence preview: {sentence[:100]}...")
+            
+            # Gentle NEGATIVE bias (-0.03) to increase AI sensitivity while preserving human accuracy
+            # -0.10 was too aggressive, -0.03 is more balanced  
+            calibrated_score = max(raw_score - 0.03, 0.0)
+            
+            logger.info(f"LLM calibrated score: {calibrated_score:.4f} (bias: -0.03)")
+            
+            # Confidence: reduced because model is unreliable
+            confidence = max(ai_prob, human_prob) * 0.7  # Reduce confidence due to bias
             
             return {
-                'score': round(score, 4),
+                'score': round(calibrated_score, 4),
                 'confidence': round(confidence, 4)
             }
             

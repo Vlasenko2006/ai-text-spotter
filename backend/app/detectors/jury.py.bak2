@@ -48,7 +48,7 @@ class JuryDetector:
         """
         if not self._available:
             # Fallback to simple voting if API key not available
-            return self._fallback_decision(math_result, llm_result, ai_pattern_score, predictability_score)
+            return self._fallback_decision(math_result, llm_result)
         
         try:
             # Build the prompt
@@ -208,10 +208,10 @@ Respond ONLY with JSON in this exact format:
         # Weighted ensemble: All 4 detectors
         # Weights: AI Pattern & Predictability are most reliable (target wordy/predictable patterns)
         weighted_score = (
-            math_score * 0.25 +             # Some discrimination  
-            llm_score * 0.65 +              # BEST: AI=0.0, Human=0.89 (trained on GPT)
-            ai_pattern_score * 0.05 +       # Poor: 0.62-0.72 for both
-            predictability_score * 0.05     # Poor: AI doesn't predict AI
+            math_score * 0.20 +
+            llm_score * 0.15 +
+            ai_pattern_score * 0.35 +      # Strong weight: tests wordiness/patterns
+            predictability_score * 0.30     # Strong weight: tests phrase uniqueness
         )
         
         reasoning = f'Ensemble: Math={math_score:.2f}, LLM={llm_score:.2f}, AI Pattern={ai_pattern_score:.2f}, Predictability={predictability_score:.2f}'

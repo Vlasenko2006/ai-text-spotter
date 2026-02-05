@@ -23,14 +23,21 @@ wheels/
 .installed.cfg
 *.egg
 
-# Models
+# Models and Checkpoints (heavy files)
 models/
+backend/models/
+checkpoints/
 *.bin
+*.pt
 *.pth
+*.ckpt
+*.h5
+*.pb
 *.onnx
 *.safetensors
 
-# Environment
+# Environment variables
+backend/.env
 .env
 .env.local
 

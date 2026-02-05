@@ -6,9 +6,11 @@ python-multipart==0.0.18
 
 # ML & NLP
 transformers==4.48.0
-torch==2.6.0
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.6.0+cpu  # CPU-only version (smaller than CUDA)
 sentencepiece==0.2.0
 protobuf==5.29.5
+sentence-transformers==3.3.1  # Semantic embedding detection
 
 # File Processing
 python-docx==1.1.2
@@ -16,9 +18,10 @@ pdfplumber==0.11.4
 Pillow==11.1.0
 reportlab==4.2.5
 
-# API Client
-httpx==0.28.1
+# API Client - Fixed compatible versions
+httpx>=0.23.0,<0.25.0
 python-dotenv==1.0.1
 
 # Utilities
 numpy==2.2.2
+groq>=0.4.0,<0.5.0

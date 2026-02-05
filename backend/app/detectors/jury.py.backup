@@ -30,9 +30,7 @@ class JuryDetector:
         sentence: str,
         context: Dict[str, Optional[str]],
         math_result: dict,
-        llm_result: dict,
-        ai_pattern_score: float = 0.5,
-        predictability_score: float = 0.5
+        llm_result: dict
     ) -> dict:
         """
         Make final classification decision using Groq Llama.
@@ -48,12 +46,11 @@ class JuryDetector:
         """
         if not self._available:
             # Fallback to simple voting if API key not available
-            return self._fallback_decision(math_result, llm_result, ai_pattern_score, predictability_score)
+            return self._fallback_decision(math_result, llm_result)
         
         try:
             # Build the prompt
-            prompt = self._build_prompt(sentence, context, math_result, llm_result,
-                                       ai_pattern_score, predictability_score)
+            prompt = self._build_prompt(sentence, context, math_result, llm_result)
             
             # Call Groq API
             response = self._call_groq_api(prompt)
@@ -66,16 +63,14 @@ class JuryDetector:
         except Exception as e:
             logger.error(f"Error in jury decision: {e}")
             # Fallback to simple voting
-            return self._fallback_decision(math_result, llm_result, ai_pattern_score, predictability_score)
+            return self._fallback_decision(math_result, llm_result)
     
     def _build_prompt(
         self,
         sentence: str,
         context: Dict[str, Optional[str]],
         math_result: dict,
-        llm_result: dict,
-        ai_pattern_score: float,
-        predictability_score: float
+        llm_result: dict
     ) -> str:
         """Build the prompt for Groq API."""
         before = context.get('before', '')
@@ -96,22 +91,20 @@ Detector Results:
 - Statistical Analysis: {math_score:.3f} (0=AI, 1=Human)
   Features: burstiness={math_features.get('burstiness', 0):.3f}, vocabulary_richness={math_features.get('vocabulary_richness', 0):.3f}, word_frequency={math_features.get('word_frequency', 0):.3f}, punctuation={math_features.get('punctuation', 0):.3f}, complexity={math_features.get('complexity', 0):.3f}, entropy={math_features.get('entropy', 0):.3f}
 - Language Model Analysis: {llm_score:.3f} (0=AI, 1=Human, confidence: {llm_confidence:.3f})
-- AI Pattern Analysis: {ai_pattern_score:.3f} (0=AI-wordy/repetitive, 1=Human-specific/varied)
-- Predictability Analysis: {predictability_score:.3f} (0=AI-predictable, 1=Human-unique phrasing)
-
-🔍 NEW POWERFUL DETECTORS:
-- AI Pattern: Tests for wordy language, buzzwords, generic phrases, lack of contractions
-- Predictability: Uses phrase masking - can AI predict removed words? (High prediction = AI)
 
 Classify this sentence as: human, suspicious, or ai
 
 Guidelines:
-- "human": If Statistical > 0.5 OR AI Pattern > 0.5 OR Predictability > 0.5 - prefer human when uncertain
-- "suspicious": When detectors disagree significantly
-- "ai": When MULTIPLE detectors show AI patterns (Statistical < 0.4 AND (AI Pattern < 0.4 OR Predictability < 0.4))
-- AI text is: wordy, uses buzzwords, predictable phrases, no contractions, vague generalities
-- Human text: specific details, varied sentences, natural contractions, unique phrasing
-- When in doubt, classify as human or suspicious
+- "human": If Statistical Analysis > 0.5 OR either detector > 0.4 - default to human when uncertain
+- "suspicious": Only when detectors strongly disagree (one <0.3, other >0.4)
+- "ai": ONLY when Statistical Analysis < 0.4 AND shows clear AI patterns
+- CRITICAL WARNING: The LLM detector is UNRELIABLE and over-aggressive!
+  * If LLM score < 0.3, IGNORE IT COMPLETELY - it's almost certainly wrong
+  * The Statistical Analysis is MORE TRUSTWORTHY than the LLM detector
+  * LLM gives false positives on professional human text with errors
+- Grammatical errors, typos, awkward phrasing = HUMAN (AI doesn't make these mistakes)
+- Professional cover letters, formal writing, and polished text are almost always HUMAN
+- When in doubt, classify as human or suspicious, NEVER ai unless Statistical Analysis < 0.4
 
 Respond ONLY with JSON in this exact format:
 {{"classification": "human|suspicious|ai", "confidence": 0.0-1.0, "reasoning": "brief explanation"}}"""
@@ -188,35 +181,35 @@ Respond ONLY with JSON in this exact format:
                 'reasoning': 'Failed to parse response'
             }
     
-    def _fallback_decision(
-        self,
-        math_result: dict,
-        llm_result: dict,
-        ai_pattern_score: float,
-        predictability_score: float
-    ) -> dict:
+    def _fallback_decision(self, math_result: dict, llm_result: dict) -> dict:
         """
         Fallback decision logic when Groq API is not available.
-        Uses weighted combination of all 4 detectors.
+        Heavily weights mathematical detector over unreliable LLM detector.
         """
         math_score = math_result.get('score', 0.5)
         llm_score = llm_result.get('score', 0.5)
         
-        logger.info(f"Jury decision - Math: {math_score:.4f}, LLM: {llm_score:.4f}, "
-                   f"AI Pattern: {ai_pattern_score:.4f}, Predictability: {predictability_score:.4f}")
+        logger.info(f"Jury decision - Math: {math_score:.4f}, LLM: {llm_score:.4f}")
         
-        # Weighted ensemble: All 4 detectors
-        # Weights: AI Pattern & Predictability are most reliable (target wordy/predictable patterns)
-        weighted_score = (
-            math_score * 0.25 +             # Some discrimination  
-            llm_score * 0.65 +              # BEST: AI=0.0, Human=0.89 (trained on GPT)
-            ai_pattern_score * 0.05 +       # Poor: 0.62-0.72 for both
-            predictability_score * 0.05     # Poor: AI doesn't predict AI
-        )
+        # New strategy: Low LLM scores are VALUABLE evidence of AI
+        # High math + Low LLM = Conflicting signals (use weighted)
+        # Low math + Low LLM = Strong AI indicators
         
-        reasoning = f'Ensemble: Math={math_score:.2f}, LLM={llm_score:.2f}, AI Pattern={ai_pattern_score:.2f}, Predictability={predictability_score:.2f}'
-        
-        logger.info(f"Weighted ensemble score: {weighted_score:.4f}")
+        if llm_score < 0.25:
+            # LLM strongly indicates AI - give it MORE weight, not less!
+            weighted_score = (math_score * 0.60) + (llm_score * 0.40)
+            reasoning = 'LLM shows strong AI indicators - weighted 60% math, 40% LLM'
+            logger.info(f"LLM shows strong AI signal ({llm_score:.4f}), weighted: {weighted_score:.4f}")
+        elif llm_score > 0.60:
+            # LLM strongly indicates human - trust it more
+            weighted_score = (math_score * 0.60) + (llm_score * 0.40)
+            reasoning = 'LLM shows strong human indicators - weighted 60% math, 40% LLM'
+            logger.info(f"LLM shows strong human signal ({llm_score:.4f}), weighted: {weighted_score:.4f}")
+        else:
+            # LLM in uncertain range - mostly trust math
+            weighted_score = (math_score * 0.85) + (llm_score * 0.15)
+            reasoning = 'Weighted analysis (85% statistical, 15% LLM)'
+            logger.info(f"Mixed signals, weighted: {weighted_score:.4f}")
         
         # Balanced thresholds
         if weighted_score > 0.50:  # Raised to be more selective

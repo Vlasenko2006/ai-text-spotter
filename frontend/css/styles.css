@@ -19,9 +19,12 @@
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     
     /* Classification colors */
-    --human-color: #90EE90;
-    --suspicious-color: #FFFFE0;
-    --ai-color: #FFB6C1;
+    --human-color: #4ade80;        /* Green */
+    --likely-human-color: #86efac; /* Light green */
+    --mixed-color: #fef08a;        /* Yellow */
+    --likely-ai-color: #fca5a5;    /* Light red */
+    --ai-color: #ef4444;           /* Red */
+    --suspicious-color: #fef08a;   /* Kept for backward compatibility */
 }
 
 body {
@@ -71,10 +74,18 @@ body {
     margin-bottom: 2rem;
 }
 
-.instructions h2 {
+.instructions .main-instruction {
     color: var(--primary-color);
-    margin-bottom: 1rem;
-    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.75rem;
+    font-weight: 600;
+}
+
+.instructions .instruction-details {
+    color: var(--text-color);
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 0;
 }
 
 .instructions ul {
@@ -372,12 +383,24 @@ body {
     background: var(--human-color);
 }
 
-.legend-color.suspicious {
-    background: var(--suspicious-color);
+.legend-color.likely-human {
+    background: var(--likely-human-color);
+}
+
+.legend-color.mixed {
+    background: var(--mixed-color);
+}
+
+.legend-color.likely-ai {
+    background: var(--likely-ai-color);
 }
 
 .legend-color.ai {
     background: var(--ai-color);
+}
+
+.legend-color.suspicious {
+    background: var(--suspicious-color);
 }
 
 .legend-label {
@@ -429,12 +452,24 @@ body {
     background: var(--human-color);
 }
 
-.sentence.suspicious {
-    background: var(--suspicious-color);
+.sentence.likely-human {
+    background: var(--likely-human-color);
+}
+
+.sentence.mixed {
+    background: var(--mixed-color);
+}
+
+.sentence.likely-ai {
+    background: var(--likely-ai-color);
 }
 
 .sentence.ai {
     background: var(--ai-color);
+}
+
+.sentence.suspicious {
+    background: var(--suspicious-color);
 }
 
 /* Export Buttons */

@@ -26,7 +26,7 @@ class App {
         
         textInput.addEventListener('input', () => {
             const length = textInput.value.length;
-            charCount.textContent = `${length} / 10,000 characters`;
+            charCount.textContent = `${length.toLocaleString()} characters`;
             
             // Clear file if text is entered
             if (length > 0 && window.currentFile) {
@@ -73,6 +73,12 @@ class App {
             if (health.status !== 'healthy') {
                 console.warn('API is not fully healthy:', health);
             }
+            
+            // Warmup: Call health endpoint periodically to keep backend warm
+            setInterval(() => {
+                API.health().catch(err => console.error('Warmup health check failed:', err));
+            }, 5 * 60 * 1000); // Every 5 minutes
+            
         } catch (error) {
             console.error('Health check failed:', error);
         }
@@ -80,13 +86,9 @@ class App {
     
     async analyze() {
         try {
-            // Hide previous results and errors
-            this.hideError();
-            TextDisplay.clear();
-            
-            // Get input
+            // Get input first
             const textInput = document.getElementById('textInput');
-            const text = textInput.value.trim();
+            let text = textInput.value.trim();
             const file = window.currentFile;
             
             // Validate input
@@ -97,6 +99,15 @@ class App {
             if (text && text.length < 50) {
                 throw new Error('Text is too short. Please enter at least 50 characters.');
             }
+            
+            // Truncate text if needed (silently)
+            if (text && text.length > 10000) {
+                text = text.substring(0, 10000);
+            }
+            
+            // Hide previous results and errors BEFORE disabling button
+            this.hideError();
+            TextDisplay.clear();
             
             // Disable analyze button
             const analyzeBtn = document.getElementById('analyzeBtn');
