@@ -1,3 +1,96 @@
+# Distinguishing AI-Generated from Human-Written Text: A Semantic Analysis
+
+## Introduction
+
+
+Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is a kind of literature fingerprint, allowing to spot the authorship. Based on this fact we develped a method that defines AI written texts with accuracy greater than 75%. Although the modern AI spotifiers show higher accuracy, our method stays out due to its simplicity and mathematical explainability. It can be used as a separate tool for identifying AI texts or serve as a suplementary to existing ones to sharpen their accuracy.  
+
+
+Comparing AI and human written texts approximately of the same length and topic we noticed that: humans use concrete imagery with concise descriptions in their explanations, while AI-generated content tends to be more abstract and verbose. Presenting texts in the embedded symantical space, where each symantic expression corresponds to a vector in this space we found 25% larger spread of these vectors corresponding to AI texts rather than human texts. This clear marker is the keystone of our detection technique.
+
+We test our method on 600 wikipedia articles and AI generated texts on the same topics. We used LLama 3.1/3.3 and GPT-5 mini LLMs for AI text generation. In additio we found that AI texts have the same spread irrespective of the language model used, which also indicates on the common way of generationg textsExpected Outcomes
+Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is similar to fingerprint, allowing t.  
+
+
+
+This observation raises an important question: **Can we determine whether an article was written by a human or AI based solely on writing style?**
+
+## Semantic Space: A Theoretical Framework
+
+To answer this question, we need to introduce the concept of **semantic space**. Here's how we construct it:
+
+### Tokenization Process
+
+1. Take a given text and break each word into smaller parts called **tokens** (not necessarily corresponding to syllables)
+2. Assign each token a unique ID
+
+**Example:**
+- "played" → `[play: 01, ed: 02]`
+- "called" → `[call: 03, ed: 02]`
+
+This produces vector representations:
+- "played" = `[01, 02]`
+- "called" = `[03, 02]`
+
+### Dimensionality Reduction
+
+Since natural language can contain up to a million words, the resulting vector representation requires compression for computational processing. 
+
+Standard linear compression involves multiplying the sequence of vectors by a transition matrix, which serves as a basis in a more compact space. However, for this analysis, we employ an alternative approach.
+
+## Experimental Design
+
+### Hypothesis
+
+We propose that:
+- **AI-generated text** is richer in abstract imagery and more verbose
+- **Human-written text** uses more concrete, specific examples with less redundancy
+
+While a human expert and an AI might convey the same core meaning when describing a topic, their **stylistic approaches and imagery differ significantly**.
+
+### Key Assumption
+
+Each sentence or paragraph contains one or two images, metaphors, or conceptual elements that can be represented as semantic vectors. 
+
+Since AI tends to be:
+- Richer in abstract imagery
+- More verbose than humans
+
+The semantic vectors in AI-generated explanations should show **greater variance** compared to human-written content.
+
+## Methodology
+
+### Dataset
+- **300 articles from Wikipedia** (human-written baseline)
+- **300 AI-generated articles** on similar topics
+
+### Analysis Process
+
+1. **Text Segmentation**: Divide each text into N parts, ensuring each segment ends with a complete sentence
+2. **Embedding Generation**: Perform embedding on each segment to obtain semantic vectors
+3. **Variance Analysis**: Compare the distribution and variance of semantic vectors between AI and human-written content
+
+## Expected Outcomes
+
+
+
+By analyzing the variance and distribution patterns of semantic vectors, we aim to develop a method for distinguishing AI-generated content from human-written text based on statistical analysis of stylistic and semantic characteristics rather than content alone.
+
+The method shows that 
+
+---
+
+## Notes
+
+- This approach focuses on **stylistic differences** rather than factual content
+- The method relies on measurable differences in semantic vector variance
+- Further research is needed to validate the hypothesis across different domains and languages
+
+
+
+
+
+
 # 🔍 AI Text Spotter
 
 **AI-generated text detection system for cover letters using ensemble detection**
