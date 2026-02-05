@@ -15,90 +15,11 @@ The AI-spotter splits the input text splits 50 chuncks approximately of the same
 
 If the input text has less than 50 sentenses, each chunk becomes equal to the sentence, and the total amount of chunks is equal to the amout of sentences. Since the reliable standard deviation estimates requires large number of chuncks, the method has lesser accuracy for the texts with small sentence contnent.    
 
+## Treining and Testing AI-spotter
+
 We test our method on 600 wikipedia articles and AI generated texts on the same topics. We used LLama 3.1/3.3 and GPT-5 mini LLMs for AI text generation. In additio we found that AI texts have the same spread irrespective of the language model used, which also indicates on the common way of generationg textsExpected Outcomes
-Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is similar to fingerprint, allowing t.  
+Each writer has its unique style of reasoning/explanation, which is also true for large language models. This style is similar to fingerprint, allowing t. 
 
-
-
-This observation raises an important question: **Can we determine whether an article was written by a human or AI based solely on writing style?**
-
-## Semantic Space: A Theoretical Framework
-
-To answer this question, we need to introduce the concept of **semantic space**. Here's how we construct it:
-
-### Tokenization Process
-
-1. Take a given text and break each word into smaller parts called **tokens** (not necessarily corresponding to syllables)
-2. Assign each token a unique ID
-
-**Example:**
-- "played" → `[play: 01, ed: 02]`
-- "called" → `[call: 03, ed: 02]`
-
-This produces vector representations:
-- "played" = `[01, 02]`
-- "called" = `[03, 02]`
-
-### Dimensionality Reduction
-
-Since natural language can contain up to a million words, the resulting vector representation requires compression for computational processing. 
-
-Standard linear compression involves multiplying the sequence of vectors by a transition matrix, which serves as a basis in a more compact space. However, for this analysis, we employ an alternative approach.
-
-## Experimental Design
-
-### Hypothesis
-
-We propose that:
-- **AI-generated text** is richer in abstract imagery and more verbose
-- **Human-written text** uses more concrete, specific examples with less redundancy
-
-While a human expert and an AI might convey the same core meaning when describing a topic, their **stylistic approaches and imagery differ significantly**.
-
-### Key Assumption
-
-Each sentence or paragraph contains one or two images, metaphors, or conceptual elements that can be represented as semantic vectors. 
-
-Since AI tends to be:
-- Richer in abstract imagery
-- More verbose than humans
-
-The semantic vectors in AI-generated explanations should show **greater variance** compared to human-written content.
-
-## Methodology
-
-### Dataset
-- **300 articles from Wikipedia** (human-written baseline)
-- **300 AI-generated articles** on similar topics
-
-### Analysis Process
-
-1. **Text Segmentation**: Divide each text into N parts, ensuring each segment ends with a complete sentence
-2. **Embedding Generation**: Perform embedding on each segment to obtain semantic vectors
-3. **Variance Analysis**: Compare the distribution and variance of semantic vectors between AI and human-written content
-
-## Expected Outcomes
-
-
-
-By analyzing the variance and distribution patterns of semantic vectors, we aim to develop a method for distinguishing AI-generated content from human-written text based on statistical analysis of stylistic and semantic characteristics rather than content alone.
-
-The method shows that 
-
----
-
-## Notes
-
-- This approach focuses on **stylistic differences** rather than factual content
-- The method relies on measurable differences in semantic vector variance
-- Further research is needed to validate the hypothesis across different domains and languages
-
-
-
-
-
-
-# 🔍 AI Text Spotter
 
 **AI-generated text detection system for cover letters using ensemble detection**
 
@@ -106,78 +27,9 @@ The method shows that
 [![Python](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-AI Text Spotter is a web application that detects AI-generated text in cover letters using an ensemble of three independent detectors:
-
-1. **Pure Mathematical/Statistical Detector** - No neural networks, only statistical analysis
-2. **AI Detector (DistilBERT)** - Small transformer model for AI text classification  
-3. **Jury Model (Groq Llama 3.1 8B)** - Final arbitrator via API
 
 > **Security Note**: All dependencies updated to latest secure versions (January 2025). See [SECURITY.md](SECURITY.md) for details.
 
-## 🏗️ Architecture
-
-```
-┌─────────────────┐
-│   User Input    │
-│  (Text/File)    │
-└────────┬────────┘
-         │
-         ▼
-┌─────────────────┐
-│ Text Processor  │ ← Sentence splitting
-└────────┬────────┘
-         │
-         ▼
-    ┌────┴────┐
-    │         │
-    ▼         ▼
-┌─────────┐ ┌──────────┐
-│  Math   │ │   LLM    │
-│Detector │ │ Detector │
-└────┬────┘ └─────┬────┘
-     │            │
-     └──────┬─────┘
-            ▼
-     ┌──────────────┐
-     │Jury Detector │ ← Groq Llama 3.1 8B
-     └──────┬───────┘
-            │
-            ▼
-     ┌──────────────┐
-     │ Classification│
-     │  per Sentence │
-     └──────────────┘
-```
-
-### Detection Strategy
-
-**Mathematical Detector** analyzes:
-- **Burstiness**: Variance in sentence/word length
-- **Vocabulary Richness**: Type-token ratio (unique words / total words)
-- **Word Frequency**: Average word commonness
-- **Punctuation Patterns**: Punctuation usage analysis
-- **Sentence Complexity**: Syntactic complexity measures
-- **Entropy**: Word length distribution entropy
-
-**LLM Detector** uses:
-- DistilBERT-based model (`Hello-SimpleAI/chatgpt-detector-roberta`)
-- ~250MB model size (optimized for low-memory environments)
-- <200ms inference time per sentence
-
-**Jury Detector** provides:
-- Final arbitration using Groq Llama 3.1 8B
-- Context-aware decision making
-- Three-class classification: human, suspicious, ai
-
-## 🚀 Features
-
-- ✅ **Sentence-level analysis** - Each sentence is analyzed independently
-- ✅ **Multiple input formats** - PDF, DOCX, TXT, or direct text paste
-- ✅ **Color-coded highlighting** - Green (human), Yellow (suspicious), Red (AI)
-- ✅ **Detailed analysis** - View scores and reasoning for each sentence
-- ✅ **Export with highlights** - Download results as DOCX or PDF
-- ✅ **Memory optimized** - Runs on AWS t3.micro (1GB RAM)
-- ✅ **No framework dependencies** - Pure HTML/CSS/JavaScript frontend
 
 ## 📋 Requirements
 
