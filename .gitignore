@@ -76,6 +76,8 @@ ai_generated_articles/
 validation_wiki_articles/
 validation_ai_generated_articles/
 validation_gpt_52/
+application_letters_ai/
+validation_ai_texts/
 
 # Embeddings and numpy arrays (heavy)
 embeddings/
