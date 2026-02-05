@@ -65,3 +65,88 @@ htmlcov/
 
 # Docker
 .dockerignore
+
+# Heavy datasets and generated content
+wiki_articles/
+ai_generated_texts/
+ai_generated_texts_backup/
+ai_generated_texts_old/
+ai_generated_texts_temp_failed/
+ai_generated_articles/
+validation_wiki_articles/
+validation_ai_generated_articles/
+validation_gpt_52/
+
+# Embeddings and numpy arrays (heavy)
+embeddings/
+*.npy
+embedding_statistics.csv
+
+# Generated PDFs and images
+*.pdf
+*.png
+*.jpg
+*.jpeg
+
+# Generated JSON data
+scientific_articles_database.json
+ai_suspicious_patterns.json
+style_improvements_from_human_articles.json
+
+# Backup files
+backups/
+archive/
+*.backup
+*.bak
+*.bak2
+*.bak3
+*.bak4
+*_backup.py
+*— копия.py
+*— копия 2.py
+*— копия/
+*— копия 2/
+
+# Logs and temporary files
+*.log
+extension_log.txt
+extension_progress.log
+fix_progress.log
+regenerate_ai.log
+regeneration_progress.log
+validation_download.log
+validation_gen_fast.log
+validation_generation.log
+validation_generation_resume.log
+docker-build.log
+tuning_log.txt
+test_fixed.log
+test_output.log
+test_output_full.log
+
+# Test results and reports
+test_results.txt
+test_results_full.json
+test_results_iteration2.txt
+test_negative_bias.txt
+tuning_report.json
+
+# Shell scripts (deployment specific)
+*.sh
+
+# Generated markdown and documentation variants
+*_backup*.md
+scientific_introduction_ai_detection.md
+GENERATION_LOG.md
+BUG_REPORT_ZERO_PADDING.md
+5ZONE_TEST_REPORT.md
+STYLE_TRANSFER_ANALYSIS_REPORT.md
+IMPROVEMENTS_SUMMARY.md
+
+# Corpus data
+corpus/
+
+# Example binary files (keep only .txt files)
+examples/*.pdf
+examples/*.docx
+examples/*.doc
